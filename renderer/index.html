@@ -8,6 +8,26 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- Boot Gate: overlay que bloqueia o app ate confirmar que esta atualizado -->
+  <div id="boot-gate" class="boot-gate">
+    <div class="boot-gate-card">
+      <div class="brand-mark big">J</div>
+      <h1>Javitech RPA</h1>
+      <p id="boot-gate-status">Verificando atualizações...</p>
+      <div class="progress-bar">
+        <div id="boot-gate-bar" class="progress-fill"></div>
+      </div>
+      <div id="boot-gate-actions" class="actions hidden">
+        <button id="boot-gate-retry" class="primary">Tentar novamente</button>
+        <button id="boot-gate-continue" class="ghost">Continuar mesmo assim</button>
+      </div>
+      <p id="boot-gate-hint" class="muted small hint hidden">
+        Não conseguimos verificar atualizações. Confira sua internet ou clique em
+        "Continuar mesmo assim" pra usar a versão instalada.
+      </p>
+    </div>
+  </div>
+
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
@@ -24,7 +44,6 @@
       </div>
 
       <div class="sidebar-footer">
-        <div id="updater-banner" class="updater hidden"></div>
         <a class="nav-item" href="#/" data-route="/">Início</a>
         <div id="version-tag" class="version">v—</div>
       </div>

@@ -16,7 +16,7 @@
     "pack": "electron-builder --dir",
     "build": "electron-builder",
     "publish": "electron-builder --publish always",
-    "release": "node scripts/bump-version.js && git push && git push --tags"
+    "release": "node scripts/bump-version.js"
   },
   "dependencies": {
     "electron-log": "^5.1.5",
@@ -52,8 +52,7 @@
           ]
         }
       ],
-      "icon": "build/icon.ico",
-      "publisherName": "Javitech"
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,

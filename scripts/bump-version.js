@@ -42,5 +42,17 @@ run(`git add package.json`);
 run(`git commit -m "chore(release): v${next}"`);
 run(`git tag v${next}`);
 
-console.log(`\nFeito! Agora rode: git push && git push --tags`);
-console.log(`O GitHub Actions vai construir e publicar o release automaticamente.`);
+// Push direto pra evitar que o usuario tenha que digitar 'git push && git push --tags'
+// (que nao funciona no PowerShell). Roda os dois pushes separados.
+console.log(`\nPushando commit e tag pro origin...`);
+try {
+  run(`git push origin HEAD`);
+  run(`git push origin v${next}`);
+  console.log(`\nPronto! v${next} foi pushada. GitHub Actions vai construir e publicar em ~5-10 min.`);
+  console.log(`Acompanhe em: https://github.com/jpinho007/javitech-rpa/actions`);
+} catch (e) {
+  console.error(`\nERRO no push. Resolve o erro acima e rode manualmente:`);
+  console.error(`  git push`);
+  console.error(`  git push --tags`);
+  process.exit(1);
+}

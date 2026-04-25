@@ -71,13 +71,13 @@ Aba **Histórico** mostra o que foi enviado dividido em **Hoje / Ontem / Esta se
 
 ## 7) Atualizações
 
-O app verifica atualização automática **toda vez que abre**. Se houver versão nova:
+O app **só abre depois de verificar atualizações**. É uma trava de segurança: ninguém usa versão velha por engano.
 
-1. Aparece uma faixa azul na lateral: **"Atualização X.Y.Z disponível, baixando..."**.
-2. Quando termina o download: **"Atualização X.Y.Z pronta. Reinicie o app."**.
-3. Feche e reabra o Javitech RPA — pronto, atualizado.
+Toda vez que você abre o Javitech RPA, aparece uma tela escura **"Verificando atualizações..."**. Aí:
 
-Você não precisa fazer nada manual.
+1. **Se está na versão mais nova** → libera e abre normal (uns 2-5 segundos).
+2. **Se tem versão nova** → tela vira **"Baixando atualização vX.Y.Z..."** com barra de progresso. Em seguida **"Aplicando atualização, reiniciando..."**. O app fecha sozinho, instala, e abre na versão nova. Você não faz nada.
+3. **Se não conseguir verificar** (sem internet, GitHub fora do ar) → aparece "Não consegui verificar atualizações" com dois botões: **Tentar novamente** ou **Continuar mesmo assim**.
 
 ## 8) Onde ficam os dados
 

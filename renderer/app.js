@@ -414,20 +414,64 @@ function appendLog(el, message, level) {
   el.scrollTop = el.scrollHeight;
 }
 
-// === Updater banner ===
-window.javitech.on('updater:status', (s) => {
-  const banner = $('#updater-banner');
-  if (!banner) return;
-  let txt = '';
-  if (s.status === 'checking') txt = 'Verificando atualização...';
-  else if (s.status === 'available') txt = `Atualização ${s.version} baixando...`;
-  else if (s.status === 'downloading') txt = `Baixando: ${s.percent}%`;
-  else if (s.status === 'downloaded') txt = `Atualização ${s.version} pronta. Reinicie o app.`;
-  else if (s.status === 'up-to-date') txt = '';
-  else if (s.status === 'error') txt = `Erro de atualização: ${s.message || ''}`;
-  if (txt) { banner.textContent = txt; banner.classList.remove('hidden'); }
-  else banner.classList.add('hidden');
-});
+// === Boot Gate (atualizacao obrigatoria no boot) ===
+function bootGateInit() {
+  const gate = document.getElementById('boot-gate');
+  if (!gate) return;
+  const status = document.getElementById('boot-gate-status');
+  const bar = document.getElementById('boot-gate-bar');
+  const actions = document.getElementById('boot-gate-actions');
+  const hint = document.getElementById('boot-gate-hint');
+  const btnRetry = document.getElementById('boot-gate-retry');
+  const btnContinue = document.getElementById('boot-gate-continue');
+
+  function setStatus(msg, pct) {
+    if (status) status.textContent = msg;
+    if (bar && typeof pct === 'number') bar.style.width = Math.min(100, pct) + '%';
+  }
+  function showActions() {
+    if (actions) actions.classList.remove('hidden');
+    if (hint) hint.classList.remove('hidden');
+  }
+  function hideActions() {
+    if (actions) actions.classList.add('hidden');
+    if (hint) hint.classList.add('hidden');
+  }
+  function unlock() {
+    gate.classList.add('hidden');
+    setTimeout(() => { gate.style.display = 'none'; }, 400);
+  }
+
+  btnRetry.addEventListener('click', async () => {
+    hideActions();
+    setStatus('Verificando novamente...', 0);
+    await window.javitech.updater.recheck();
+  });
+  btnContinue.addEventListener('click', async () => {
+    await window.javitech.updater.bypass();
+    unlock();
+  });
+
+  window.javitech.on('updater:gate', s => {
+    if (s.state === 'checking') {
+      hideActions();
+      setStatus('Verificando atualizações...', 0);
+    } else if (s.state === 'downloading') {
+      hideActions();
+      const v = s.version ? `v${s.version}` : '';
+      setStatus(`Baixando atualização ${v}... ${s.percent || 0}%`, s.percent || 0);
+    } else if (s.state === 'applying') {
+      hideActions();
+      setStatus(`Aplicando atualização v${s.version}, reiniciando...`, 100);
+    } else if (s.state === 'up-to-date') {
+      unlock();
+    } else if (s.state === 'error') {
+      setStatus(`Não consegui verificar: ${s.message || 'erro desconhecido'}`);
+      showActions();
+    }
+  });
+}
+bootGateInit();
 
 // === Boot ===
 (async function boot() {

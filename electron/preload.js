@@ -7,6 +7,10 @@ contextBridge.exposeInMainWorld('javitech', {
     info: () => ipcRenderer.invoke('app-info'),
     openUserData: () => ipcRenderer.invoke('open-userdata')
   },
+  updater: {
+    recheck: () => ipcRenderer.invoke('updater-recheck'),
+    bypass: () => ipcRenderer.invoke('updater-bypass')
+  },
   rpas: {
     list: () => ipcRenderer.invoke('list-rpas')
   },
@@ -37,7 +41,7 @@ contextBridge.exposeInMainWorld('javitech', {
       'runner:extract-progress', 'runner:extract-done',
       'runner:preview-ready',
       'runner:send-progress', 'runner:send-done',
-      'updater:status'
+      'updater:gate'
     ];
     if (!allowed.includes(channel)) return () => {};
     const wrapped = (_e, payload) => handler(payload);

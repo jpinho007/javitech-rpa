@@ -33,6 +33,8 @@ const { setupAutoUpdater } = require('./updater');
 
 let mainWindow = null;
 let runner = null;
+let updaterCtl = null;
+let updateBypassed = false;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -64,7 +66,11 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   createWindow();
-  setupAutoUpdater(mainWindow, log);
+  // Espera o renderer carregar antes de comecar a checar updates -
+  // garante que o overlay/listener ja esta pronto pra receber eventos.
+  mainWindow.webContents.once('did-finish-load', () => {
+    updaterCtl = setupAutoUpdater(mainWindow, log);
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -103,6 +109,14 @@ ipcMain.handle('app-info', () => ({
 }));
 
 ipcMain.handle('open-userdata', () => shell.openPath(USER_DATA_DIR));
+
+// === Updater controle (boot gate) ===
+ipcMain.handle('updater-recheck', () => {
+  if (updaterCtl && typeof updaterCtl.recheck === 'function') updaterCtl.recheck();
+  return true;
+});
+ipcMain.handle('updater-bypass', () => { updateBypassed = true; return true; });
+ipcMain.handle('updater-bypassed', () => updateBypassed);
 
 // === Configuracoes ===
 ipcMain.handle('settings-get', () => config.__load());
