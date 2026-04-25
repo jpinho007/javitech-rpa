@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
+  <title>Javitech RPA</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">J</div>
+        <div class="brand-name">
+          <strong>Javitech</strong>
+          <span>RPA</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Aplicações</div>
+        <nav id="apps-nav" class="apps-nav"></nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <div id="updater-banner" class="updater hidden"></div>
+        <a class="nav-item" href="#/" data-route="/">Início</a>
+        <div id="version-tag" class="version">v—</div>
+      </div>
+    </aside>
+    <main id="view"></main>
+  </div>
+
+  <!-- ========== Home ========== -->
+  <template id="tpl-home">
+    <section class="view">
+      <header class="view-header">
+        <h1>Javitech RPA</h1>
+        <p class="muted">Selecione uma aplicação à esquerda ou abaixo.</p>
+      </header>
+      <div id="rpa-grid" class="rpa-grid"></div>
+    </section>
+  </template>
+
+  <!-- ========== RPA wrapper ========== -->
+  <template id="tpl-rpa-page">
+    <section class="view">
+      <header class="view-header">
+        <h1 id="rpa-title">RPA</h1>
+        <p id="rpa-desc" class="muted"></p>
+        <nav class="subtabs">
+          <a class="subtab" data-subtab="executar" href="#">Executar</a>
+          <a class="subtab" data-subtab="configuracoes" href="#">Configurações</a>
+          <a class="subtab" data-subtab="historico" href="#">Histórico</a>
+        </nav>
+      </header>
+      <div id="rpa-content"></div>
+    </section>
+  </template>
+
+  <!-- ========== Enviar Prioridades: passos ========== -->
+  <template id="tpl-prioridades-executar">
+    <div id="prioridade-step"></div>
+  </template>
+
+  <template id="tpl-step-login">
+    <div class="card">
+      <h2>1) Faça login</h2>
+      <p>Vou abrir uma janela do navegador com duas abas:</p>
+      <ul class="check-list">
+        <li>Mercado Livre — <span class="muted">faça login se for a primeira vez.</span></li>
+        <li>WhatsApp Web — <span class="muted">escaneie o QR Code se for a primeira vez.</span></li>
+      </ul>
+      <p class="muted small">Após o primeiro login, a sessão fica salva e nas próximas vezes só clicar.</p>
+      <div class="actions">
+        <button id="btn-open-browser" class="primary">Abrir navegador e fazer login</button>
+        <button id="btn-login-done" class="primary hidden">Já fiz login, prosseguir</button>
+      </div>
+      <div id="login-log" class="log"></div>
+    </div>
+  </template>
+
+  <template id="tpl-step-modo">
+    <div class="card">
+      <h2>2) O que enviar?</h2>
+      <p id="modo-summary" class="muted"></p>
+      <div class="modo-options">
+        <button class="modo-btn" data-modo="todas">
+          <strong>Todas</strong>
+          <span>Envia para todas as rotas (mesmo as já enviadas hoje)</span>
+        </button>
+        <button class="modo-btn" data-modo="novas">
+          <strong>Não enviadas</strong>
+          <span>Pula as que já saíram hoje. Reseta automático no virar do dia.</span>
+        </button>
+        <button class="modo-btn danger" data-modo="cancelar">
+          <strong>Cancelar</strong>
+          <span>Fecha o navegador e volta pra tela inicial.</span>
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-step-extract">
+    <div class="card">
+      <h2>3) Extraindo rotas...</h2>
+      <div class="progress-row">
+        <div class="progress-bar"><div id="extract-bar" class="progress-fill"></div></div>
+        <span id="extract-counter">0 / 0</span>
+      </div>
+      <div id="extract-log" class="log"></div>
+    </div>
+  </template>
+
+  <template id="tpl-step-preview">
+    <div class="card">
+      <h2>4) Confirmar envio</h2>
+      <p id="preview-summary" class="muted"></p>
+      <div id="preview-list" class="preview-list"></div>
+      <div class="actions">
+        <button id="btn-back-modo" class="ghost">Voltar</button>
+        <button id="btn-send" class="primary">Enviar mensagens</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-step-progress">
+    <div class="card">
+      <h2>5) Enviando...</h2>
+      <div class="progress-row">
+        <div class="progress-bar"><div id="send-bar" class="progress-fill"></div></div>
+        <span id="send-counter">0 / 0</span>
+      </div>
+      <div class="stats">
+        <span class="stat success" id="stat-ok">✓ 0</span>
+        <span class="stat fail" id="stat-fail">✗ 0</span>
+      </div>
+      <div id="send-log" class="log"></div>
+      <div class="actions">
+        <button id="btn-abort" class="ghost danger">Abortar</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-step-done">
+    <div class="card">
+      <h2>Concluído!</h2>
+      <div id="done-summary" class="big-summary"></div>
+      <div class="actions">
+        <button id="btn-new-run" class="primary">Voltar para a tela inicial</button>
+        <button id="btn-go-history" class="ghost">Ver histórico</button>
+      </div>
+    </div>
+  </template>
+
+  <!-- ========== Configurações por RPA ========== -->
+  <template id="tpl-prioridades-configuracoes">
+    <form id="settings-form" class="card form">
+      <fieldset>
+        <legend>Envio no WhatsApp</legend>
+
+        <label class="field">
+          <span>Nome do contato fixo</span>
+          <input type="text" name="contactName" placeholder="Ex: MEU OI" />
+          <small class="muted">Quando "enviar direto pro motorista" estiver desmarcado, todas as mensagens vão para esse contato.</small>
+        </label>
+
+        <label class="toggle">
+          <input type="checkbox" name="sendDirectToDriver" />
+          <span>Enviar direto para o motorista</span>
+          <small class="muted">Busca um contato com o nome completo do motorista da rota e envia uma mensagem para cada um.</small>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Classificação de paradas</legend>
+        <label class="field">
+          <span>Mínimo de pacotes para residencial aparecer</span>
+          <input type="number" min="1" max="50" name="residentialPackageThreshold" />
+        </label>
+        <label class="field">
+          <span>Quantidade que vira anotação "(N pacotes)"</span>
+          <input type="number" min="1" max="200" name="residentialAnnotationThreshold" />
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Envio</legend>
+        <label class="field">
+          <span>Delay entre envios (ms)</span>
+          <input type="number" min="0" max="60000" name="delayBetweenMessagesMs" />
+          <small class="muted">3000ms = 3 segundos. Reduzir abaixo disso aumenta risco de bloqueio do WhatsApp.</small>
+        </label>
+        <label class="field">
+          <span>Dias de histórico mantidos</span>
+          <input type="number" min="1" max="90" name="historyRetentionDays" />
+          <small class="muted">Padrão: 30 dias. Acima disso, registros antigos são apagados automaticamente.</small>
+        </label>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit" class="primary">Salvar</button>
+        <button type="button" id="btn-open-userdata" class="ghost">Abrir pasta de dados</button>
+      </div>
+      <div id="settings-status" class="status"></div>
+    </form>
+  </template>
+
+  <!-- ========== Histórico por RPA ========== -->
+  <template id="tpl-prioridades-historico">
+    <div>
+      <p class="muted">Mantém até <span id="hist-retention">30</span> dias.</p>
+      <div id="historico-buckets"></div>
+      <div class="actions">
+        <button id="btn-clear-history" class="ghost danger">Limpar histórico desta RPA</button>
+      </div>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

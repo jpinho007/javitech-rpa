@@ -1,0 +1,16 @@
+{
+  "ml": {
+    "monitoringUrl": "https://envios.adminml.com/logistics/monitoring-distribution?site=MLB",
+    "detailUrlTemplate": "https://envios.adminml.com/logistics/monitoring-distribution/detail/{id}?site=MLB"
+  },
+  "whatsapp": {
+    "url": "https://web.whatsapp.com",
+    "contactName": "MEU OI",
+    "sendDirectToDriver": false
+  },
+  "routeIds": [],
+  "residentialPackageThreshold": 5,
+  "residentialAnnotationThreshold": 20,
+  "delayBetweenMessagesMs": 3000,
+  "historyRetentionDays": 30
+}

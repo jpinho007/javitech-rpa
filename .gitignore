@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+out/
+release/
+
+# Logs
+*.log
+logs/
+
+# Sessao do navegador (login persistente)
+.browser-profile/
+
+# Estado de envios (gerado em runtime)
+.sent-today.json
+.history.json
+.settings.json
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Sistema
+*.bak
+*.tmp

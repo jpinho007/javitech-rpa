@@ -1,0 +1,75 @@
+{
+  "name": "javitech-rpa",
+  "version": "1.0.0",
+  "description": "Javitech RPA - Plataforma desktop para automacoes operacionais (RPA: Enviar Prioridades + futuras)",
+  "main": "electron/main.js",
+  "author": {
+    "name": "Javitech",
+    "email": "jardel.dta@gmail.com"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "test": "node test/message.test.js && node test/scraper.test.js && node test/sent-today.test.js && node test/history.test.js",
+    "pack": "electron-builder --dir",
+    "build": "electron-builder",
+    "publish": "electron-builder --publish always",
+    "release": "node scripts/bump-version.js && git push && git push --tags"
+  },
+  "dependencies": {
+    "electron-log": "^5.1.5",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.9",
+    "playwright": "^1.47.0"
+  },
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.javitech.rpa",
+    "productName": "Javitech RPA",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "renderer/**/*",
+      "src/**/*",
+      "package.json",
+      "!**/.browser-profile/**",
+      "!**/dist/**",
+      "!**/.git/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "publisherName": "Javitech"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Javitech RPA",
+      "include": "build/installer.nsh"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "jpinho007",
+        "repo": "javitech-rpa",
+        "releaseType": "release"
+      }
+    ]
+  }
+}
