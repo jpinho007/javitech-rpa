@@ -2,6 +2,8 @@
 
 > Manual pro cliente final. Sem termo técnico.
 
+**O que precisa instalar:** **só** o `.exe` do Javitech RPA. Não precisa instalar Node.js, navegador, nem nada extra. O instalador já vem com tudo embutido (~280 MB).
+
 ---
 
 ## 1) Baixar

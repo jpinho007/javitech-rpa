@@ -13,9 +13,10 @@
     "start": "electron .",
     "dev": "electron .",
     "test": "node test/message.test.js && node test/scraper.test.js && node test/sent-today.test.js && node test/history.test.js",
-    "pack": "electron-builder --dir",
-    "build": "electron-builder",
-    "publish": "electron-builder --publish always",
+    "prepare-build": "node scripts/install-browsers.js",
+    "pack": "npm run prepare-build && electron-builder --dir",
+    "build": "npm run prepare-build && electron-builder",
+    "publish": "npm run prepare-build && electron-builder --publish always",
     "release": "node scripts/bump-version.js"
   },
   "dependencies": {
@@ -42,6 +43,13 @@
       "!**/.browser-profile/**",
       "!**/dist/**",
       "!**/.git/**"
+    ],
+    "extraResources": [
+      {
+        "from": "build/playwright-browsers",
+        "to": "playwright-browsers",
+        "filter": ["**/*"]
+      }
     ],
     "win": {
       "target": [

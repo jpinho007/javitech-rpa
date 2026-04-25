@@ -3,6 +3,14 @@ const path = require('path');
 const fs = require('fs');
 const log = require('electron-log');
 
+// Playwright em producao usa o Chromium embarcado em
+// resources/playwright-browsers/. Em dev, usa o cache padrao do sistema
+// (%LOCALAPPDATA%\ms-playwright). Tem que setar ANTES de require qualquer
+// modulo que use playwright.
+if (app.isPackaged) {
+  process.env.PLAYWRIGHT_BROWSERS_PATH = path.join(process.resourcesPath, 'playwright-browsers');
+}
+
 // userData fica em %APPDATA%/Javitech RPA - todos os arquivos de estado
 // (config.json, .sent-today.json, .history.json, .browser-profile/) ficam la.
 function bootstrapUserData() {

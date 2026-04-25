@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: write   # necessario pro electron-builder publicar releases
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,11 +25,13 @@ jobs:
 
       - name: Run tests
         run: npm test
-        continue-on-error: false
+
+      - name: Install Playwright Chromium (bundled)
+        run: npm run prepare-build
 
       - name: Build & publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Code signing fica desligado por enquanto
+          # Code signing fica desligado - sem certificado EV.
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npx electron-builder --win --publish always
