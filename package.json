@@ -1,6 +1,6 @@
 {
   "name": "javitech-rpa",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Javitech RPA - Plataforma desktop para automacoes operacionais (RPA: Enviar Prioridades + futuras)",
   "main": "electron/main.js",
   "author": {
@@ -47,7 +47,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icon.ico",
