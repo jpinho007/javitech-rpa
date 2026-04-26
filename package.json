@@ -13,6 +13,7 @@
     "start": "electron .",
     "dev": "electron .",
     "test": "node test/message.test.js && node test/scraper.test.js && node test/sent-today.test.js && node test/history.test.js",
+    "icons": "node scripts/build-icons.js",
     "prepare-build": "node scripts/install-browsers.js",
     "pack": "npm run prepare-build && electron-builder --dir",
     "build": "npm run prepare-build && electron-builder",
@@ -27,7 +28,9 @@
   },
   "devDependencies": {
     "electron": "^32.2.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.33.5"
   },
   "build": {
     "appId": "com.javitech.rpa",

@@ -44,6 +44,44 @@ class PriorityRunner extends EventEmitter {
   }
 
   async openBrowser(profileDir) {
+    // Se ja tem navegador aberto (usuario clicou "abrir" duas vezes ou
+    // voltou pra home e abriu de novo), so reusa.
+    if (this.browser) {
+      this.log('Navegador ja estava aberto, reutilizando.');
+      this.setState('opening');
+
+      // Reabre as abas que tiverem fechado (usuario pode ter fechado
+      // a aba do ML ou do WA manualmente).
+      try {
+        if (!this.mlPage || this.mlPage.isClosed()) {
+          this.log('Reabrindo aba do Mercado Livre...');
+          this.mlPage = await this.browser.newPage();
+          await this.mlPage.goto(config.ml.monitoringUrl, { waitUntil: 'domcontentloaded' });
+        } else {
+          await this.mlPage.bringToFront().catch(() => {});
+        }
+        if (!this.waPage || this.waPage.isClosed()) {
+          this.log('Reabrindo aba do WhatsApp Web...');
+          this.waPage = await this.browser.newPage();
+          await this.waPage.goto(config.whatsapp.url, { waitUntil: 'domcontentloaded' });
+        }
+      } catch (e) {
+        // Se algum dos awaits falhou, o browser provavelmente morreu.
+        // Limpa e cai pro fluxo "abrir novo" abaixo.
+        this.log('Navegador parecia aberto mas nao respondeu. Abrindo de novo.', 'warn');
+        this.browser = null;
+        this.mlPage = null;
+        this.waPage = null;
+      }
+
+      if (this.browser) {
+        this.setState('login');
+        this.emit('browsers-opened');
+        return;
+      }
+    }
+
+    // Caminho normal: abre navegador novo
     this.setState('opening');
     this.log('Abrindo navegador...');
     this.browser = await chromium.launchPersistentContext(profileDir, {
@@ -51,6 +89,16 @@ class PriorityRunner extends EventEmitter {
       viewport: { width: 1366, height: 768 },
       args: ['--start-maximized']
     });
+
+    // Quando o usuario fechar o chromium manualmente (clicar X), limpamos
+    // as refs pra que a proxima chamada de openBrowser abra um novo.
+    this.browser.on('close', () => {
+      this.log('Navegador foi fechado pelo usuario.');
+      this.browser = null;
+      this.mlPage = null;
+      this.waPage = null;
+    });
+
     this.mlPage = this.browser.pages()[0] || await this.browser.newPage();
     await this.mlPage.goto(config.ml.monitoringUrl, { waitUntil: 'domcontentloaded' });
     this.waPage = await this.browser.newPage();

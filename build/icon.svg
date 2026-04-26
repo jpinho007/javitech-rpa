@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="0" dy="3" result="b"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Quadrado arredondado com gradiente azul/roxo do sistema -->
+  <rect x="0" y="0" width="512" height="512" rx="96" ry="96" fill="url(#bg)"/>
+
+  <!-- 3 orbitas cruzadas (estilo do logo Electron) -->
+  <g fill="none" stroke="white" stroke-width="18" stroke-linecap="round" filter="url(#soft)">
+    <ellipse cx="256" cy="256" rx="180" ry="78"/>
+    <ellipse cx="256" cy="256" rx="180" ry="78" transform="rotate(60 256 256)"/>
+    <ellipse cx="256" cy="256" rx="180" ry="78" transform="rotate(-60 256 256)"/>
+  </g>
+
+  <!-- Nucleo central -->
+  <circle cx="256" cy="256" r="36" fill="white" filter="url(#soft)"/>
+</svg>

@@ -1,14 +1,26 @@
 # Ícones
 
-Esta pasta espera dois ícones:
+Esta pasta tem o **`icon.svg`** — fonte de verdade do logo Javitech RPA. A partir dele a gente gera:
 
-- `icon.ico` — usado pelo `electron-builder` no Windows. **256x256, formato ICO.**
-- `icon.png` — usado pelo Electron como ícone da janela em runtime. **512x512, PNG.**
+- `icon.ico` — usado pelo `electron-builder` no Windows (multi-tamanho 16-256px).
+- `icon.png` — usado pelo Electron como ícone da janela em runtime (512x512).
 
-## Como gerar rápido
+## Como gerar/atualizar
 
-1. Faça uma imagem 512x512 PNG do logo Javitech (pode ser online: https://www.canva.com).
-2. Salve como `build/icon.png`.
-3. Converta pra ICO em https://convertio.co/png-ico/ ou similar e salve como `build/icon.ico`.
+Sempre que mexer no `icon.svg`, roda:
 
-Sem esses arquivos o build ainda funciona, mas o app vai aparecer com o ícone padrão do Electron (cinza).
+```bash
+npm install   # uma vez (instala sharp + png-to-ico)
+npm run icons
+```
+
+Pronto. O script `scripts/build-icons.js` lê o SVG e cospe `icon.png` + `icon.ico` na hora.
+
+## Editando o ícone
+
+`icon.svg` é texto puro — abre em qualquer editor (Notepad, VS Code) ou no Inkscape, edita à vontade, salva, roda `npm run icons` de novo.
+
+A versão atual usa:
+- Quadrado arredondado (radius 96/512) com gradiente azul→roxo (`#3b82f6` → `#8b5cf6`).
+- Letra "J" branca, peso 900, centralizada.
+- Pontinho branco no canto superior direito (sugere automação).

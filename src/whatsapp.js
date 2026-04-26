@@ -113,38 +113,109 @@ async function resetWaState(page) {
   }
 }
 
-// Verifica se a busca encontrou algum contato. Se nao houver resultado,
-// o modo "direto" precisa abortar pra esse motorista (contato nao salvo).
-async function searchHasResult(page) {
-  return await page.evaluate(() => {
-    const txt = document.body.innerText || '';
-    if (/Nenhuma\s+conversa.*encontrada|Nenhum\s+resultado|No\s+chats?\s+found|No\s+results?/i.test(txt)) {
+// Espera ate os resultados da busca aparecerem (ou ate confirmar que nao
+// existem). Polling de 300ms ate o timeout. Mais confiavel que setar
+// waitForTimeout fixo - o WA Web pode demorar mais quando acabou de
+// sincronizar contato novo.
+//
+// Retorna:
+//   true  -> tem pelo menos um item de chat/contato visivel na sidebar
+//   false -> WA mostrou "nenhum resultado" OU timeout sem nada aparecer
+async function waitForSearchResults(page, timeoutMs) {
+  const deadline = Date.now() + (timeoutMs || 8000);
+  while (Date.now() < deadline) {
+    const status = await page.evaluate(() => {
+      const txt = document.body.innerText || '';
+      // 1) Texto explicito de "nenhum resultado" em PT / EN / ES
+      if (/Nenhuma\s+conversa.*encontrada|Nenhum\s+resultado|No\s+chats?\s+found|No\s+results?|Sin\s+resultados/i.test(txt)) {
+        return 'empty';
+      }
+      // 2) Tem item de chat na sidebar?
+      const items = [
+        ...document.querySelectorAll('[role="listitem"]'),
+        ...document.querySelectorAll('[role="row"]')
+      ];
+      for (const el of items) {
+        const r = el.getBoundingClientRect();
+        if (r.height < 40 || r.height > 200) continue;
+        if (r.left > window.innerWidth * 0.5) continue;  // sidebar
+        if (r.top > window.innerHeight - 30) continue;
+        if ((el.innerText || '').trim().length > 0) return 'has-result';
+      }
+      return 'loading';
+    }).catch(() => 'loading');
+
+    if (status === 'has-result') return true;
+    if (status === 'empty') return false;
+    await page.waitForTimeout(300);
+  }
+  return false;
+}
+
+// Confirma que o chat abriu apos o Enter. Olha o header de conversa
+// (topo da janela direita) e checa se contem parte do nome buscado.
+// Util pra detectar quando o Enter caiu em conversa errada.
+async function chatHeaderMatches(page, contactName, timeoutMs) {
+  const deadline = Date.now() + (timeoutMs || 4000);
+  const target = contactName.trim().toLowerCase().split(/\s+/)[0]; // primeiro nome basta
+  while (Date.now() < deadline) {
+    const ok = await page.evaluate((targ) => {
+      const headers = [
+        ...document.querySelectorAll('header'),
+        ...document.querySelectorAll('div[role="region"] header'),
+        ...document.querySelectorAll('div[data-testid="conversation-header"]')
+      ];
+      for (const h of headers) {
+        const r = h.getBoundingClientRect();
+        if (r.top > 100) continue;
+        if (r.left < window.innerWidth * 0.3) continue;
+        const txt = (h.innerText || '').toLowerCase();
+        if (txt.includes(targ)) return true;
+      }
       return false;
-    }
-    return true;
-  }).catch(() => true);
+    }, target).catch(() => false);
+    if (ok) return true;
+    await page.waitForTimeout(300);
+  }
+  return false;
 }
 
 async function sendMessageOnce(page, contactName, message) {
   await resetWaState(page);
 
+  // 1) Foca a busca e limpa qualquer texto residual
   const { element: search } = await findSearchBox(page);
   await search.click();
   await page.waitForTimeout(300);
   await page.keyboard.down('Control'); await page.keyboard.press('A'); await page.keyboard.up('Control');
   await page.keyboard.press('Backspace');
   await page.waitForTimeout(150);
-  await page.keyboard.type(contactName, { delay: 30 });
-  await page.waitForTimeout(1800);
 
-  const hasResult = await searchHasResult(page);
+  // 2) Digita o nome exato do contato
+  await page.keyboard.type(contactName, { delay: 30 });
+
+  // 3) Espera ATIVA pelos resultados (poll). Usuario salva o nome identico
+  //    ao do ML, entao basta esperar o WA carregar a busca - sem precisar
+  //    procurar/clicar manualmente.
+  const hasResult = await waitForSearchResults(page, 8000);
   if (!hasResult) {
-    throw new Error(`Contato nao encontrado no WhatsApp: "${contactName}"`);
+    throw new Error(`Contato nao encontrado no WhatsApp: "${contactName}". Confira se o contato esta salvo no celular com esse nome exato e se o WhatsApp Web ja sincronizou (as vezes leva alguns segundos pra aparecer).`);
   }
 
+  // 4) Enter abre o primeiro resultado. Como o nome eh identico, e match unico.
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(1500);
 
+  // 5) Confirma que o chat abriu (header de conversa carregou)
+  const headerOk = await chatHeaderMatches(page, contactName, 5000);
+  if (!headerOk) {
+    // Header nao carregou ou tem outro nome - chat errado ou ainda nao abriu.
+    // Da uma ultima chance: espera mais 1.5s e segue. Se for chat errado, o
+    // proximo passo (achar input de mensagem) ainda funciona, so manda pra
+    // pessoa errada. Pra evitar isso, podemos abortar aqui se quiser.
+    await page.waitForTimeout(1500);
+  }
+
+  // 6) Acha a caixa de mensagem
   const input = await findMessageInput(page);
   await input.click();
 
@@ -201,4 +272,4 @@ async function sendMessage(page, contactName, message, options) {
   throw lastErr;
 }
 
-module.exports = { sendMessage, findSearchBox, findMessageInput, searchHasResult };
+module.exports = { sendMessage, findSearchBox, findMessageInput, waitForSearchResults, chatHeaderMatches };
