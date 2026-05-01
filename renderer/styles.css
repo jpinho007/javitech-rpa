@@ -383,10 +383,12 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   inset: 0;
   background: var(--bg);
   display: flex;
-  align-items: center;
   justify-content: center;
   z-index: 9999;
   transition: opacity 0.35s ease;
+  /* Permite scroll se o card nao couber - centraliza sem cortar topo/base */
+  overflow-y: auto;
+  padding: 24px 16px;
 }
 .boot-gate.hidden { opacity: 0; pointer-events: none; }
 .boot-gate-card {
@@ -395,9 +397,12 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   border-radius: 16px;
   text-align: center;
   max-width: 480px;
-  width: calc(100% - 60px);
+  width: calc(100% - 32px);
   border: 1px solid var(--border);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  /* margem auto centraliza verticalmente quando cabe, e respeita overflow
+     quando nao cabe (em vez de cortar) */
+  margin: auto;
 }
 .brand-mark.big {
   width: 80px; height: 80px; border-radius: 18px;

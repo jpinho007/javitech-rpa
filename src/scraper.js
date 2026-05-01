@@ -210,8 +210,19 @@ function parseRoutesListText(text) {
 }
 
 async function extractRoutesList(page) {
-  await page.goto(config.ml.monitoringUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(4000);
+  // Confia que o usuario ja deixou a pagina no monitoramento - so navega se
+  // estiver em uma URL diferente, pra preservar o que ele deixou aberto.
+  const currentUrl = (page.url && page.url()) || '';
+  const onMonitoring = /monitoring-distribution/i.test(currentUrl)
+    && !/\/detail\//i.test(currentUrl);
+  if (!onMonitoring) {
+    await page.goto(config.ml.monitoringUrl, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(4000);
+  } else {
+    // Pagina ja esta na lista - so um pequeno wait pra garantir que o DOM
+    // esta atualizado, sem reload.
+    await page.waitForTimeout(800);
+  }
   const text = await page.evaluate(() => document.body.innerText || '');
   return parseRoutesListText(text);
 }

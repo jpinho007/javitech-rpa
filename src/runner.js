@@ -86,8 +86,14 @@ class PriorityRunner extends EventEmitter {
     this.log('Abrindo navegador...');
     this.browser = await chromium.launchPersistentContext(profileDir, {
       headless: false,
-      viewport: { width: 1366, height: 768 },
-      args: ['--start-maximized']
+      // viewport: null faz o conteudo encher a janela inteira (em vez de
+      // ficar travado em 1366x768 com paginas cortadas em telas menores)
+      viewport: null,
+      args: [
+        '--start-maximized',
+        // Cobre o caso de monitor menor que o viewport padrao
+        '--window-size=1366,768'
+      ]
     });
 
     // Quando o usuario fechar o chromium manualmente (clicar X), limpamos

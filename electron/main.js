@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const log = require('electron-log');
@@ -45,14 +45,25 @@ let updaterCtl = null;
 let updateBypassed = false;
 
 function createWindow() {
+  // Pega tamanho da tela disponivel (workArea exclui a barra de tarefas).
+  // Ajusta a janela pra caber em qualquer monitor: notebook 1366x768
+  // tipico ate ultrawide.
+  const display = screen.getPrimaryDisplay();
+  const { width: areaW, height: areaH } = display.workAreaSize;
+
+  // Tamanho ideal: 1100x760, mas nunca maior que a tela menos 60px de margem.
+  const winW = Math.min(1100, areaW - 60);
+  const winH = Math.min(760, areaH - 60);
+
   mainWindow = new BrowserWindow({
-    width: 1100,
-    height: 760,
+    width: winW,
+    height: winH,
     minWidth: 900,
-    minHeight: 600,
+    minHeight: Math.min(600, areaH - 80),
     title: 'Javitech RPA',
     backgroundColor: '#0f172a',
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
+    useContentSize: true,  // tamanho refere ao conteudo, nao a borda da janela
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -61,6 +72,7 @@ function createWindow() {
     }
   });
 
+  mainWindow.center();
   mainWindow.removeMenu();
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 
