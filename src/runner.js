@@ -220,7 +220,9 @@ class PriorityRunner extends EventEmitter {
         await sendMessage(this.waPage, r.contact, r.message, {
           maxAttempts: 3,
           onRetry: ({ attempt, error, waitMs }) =>
-            this.log(`  (tentativa ${attempt} falhou: ${error.message.split('\n')[0]}, aguardando ${waitMs}ms)`, 'warn')
+            this.log(`  (tentativa ${attempt} falhou: ${error.message.split('\n')[0]}, aguardando ${waitMs}ms)`, 'warn'),
+          // Logs passo-a-passo do sendMessageOnce - aparece na UI
+          onStep: ({ step, level }) => this.log(`    > ${step}`, level || 'info')
         });
         ok++;
         sentToday.markSent(r.id, r.driver);
