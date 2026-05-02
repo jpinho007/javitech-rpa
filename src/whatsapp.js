@@ -113,24 +113,32 @@ async function resetWaState(page) {
   }
 }
 
-// Espera ate os resultados da busca aparecerem (ou ate confirmar que nao
-// existem). Polling de 300ms ate o timeout. Mais confiavel que setar
-// waitForTimeout fixo - o WA Web pode demorar mais quando acabou de
-// sincronizar contato novo.
+// Espera ate aparecer um resultado de busca QUE CONTEM o nome buscado
+// (case-insensitive). Polling ate timeout. Mais robusto que so checar
+// "tem algum item" - assim nao confunde com chats recentes da sidebar.
+//
+// Tambem da o tempo necessario pro WA Web debouncar a busca depois que
+// o ultimo caractere foi digitado.
 //
 // Retorna:
-//   true  -> tem pelo menos um item de chat/contato visivel na sidebar
-//   false -> WA mostrou "nenhum resultado" OU timeout sem nada aparecer
-async function waitForSearchResults(page, timeoutMs) {
-  const deadline = Date.now() + (timeoutMs || 8000);
+//   true  -> tem item visivel na sidebar cujo texto contem o nome buscado
+//   false -> WA mostrou "nenhum resultado" OU timeout sem match
+async function waitForSearchResults(page, contactName, timeoutMs) {
+  const deadline = Date.now() + (timeoutMs || 12000);
+  // Usa primeiro nome como criterio de match - mais permissivo (caso
+  // o usuario tenha salvo "Lucas" mas o ML traga "Lucas Augusto Jorge").
+  const target = contactName.trim().toLowerCase();
+  const firstWord = target.split(/\s+/)[0];
+
   while (Date.now() < deadline) {
-    const status = await page.evaluate(() => {
+    const status = await page.evaluate((args) => {
+      const { full, first } = args;
       const txt = document.body.innerText || '';
       // 1) Texto explicito de "nenhum resultado" em PT / EN / ES
       if (/Nenhuma\s+conversa.*encontrada|Nenhum\s+resultado|No\s+chats?\s+found|No\s+results?|Sin\s+resultados/i.test(txt)) {
         return 'empty';
       }
-      // 2) Tem item de chat na sidebar?
+      // 2) Procura na sidebar item cujo texto contem o nome (full ou first)
       const items = [
         ...document.querySelectorAll('[role="listitem"]'),
         ...document.querySelectorAll('[role="row"]')
@@ -138,16 +146,20 @@ async function waitForSearchResults(page, timeoutMs) {
       for (const el of items) {
         const r = el.getBoundingClientRect();
         if (r.height < 40 || r.height > 200) continue;
-        if (r.left > window.innerWidth * 0.5) continue;  // sidebar
+        if (r.left > window.innerWidth * 0.5) continue;  // sidebar so
         if (r.top > window.innerHeight - 30) continue;
-        if ((el.innerText || '').trim().length > 0) return 'has-result';
+        const itemText = (el.innerText || '').toLowerCase();
+        if (!itemText) continue;
+        if (itemText.includes(full) || itemText.includes(first)) {
+          return 'has-result';
+        }
       }
       return 'loading';
-    }).catch(() => 'loading');
+    }, { full: target, first: firstWord }).catch(() => 'loading');
 
     if (status === 'has-result') return true;
     if (status === 'empty') return false;
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(400);
   }
   return false;
 }
@@ -191,13 +203,19 @@ async function sendMessageOnce(page, contactName, message) {
   await page.keyboard.press('Backspace');
   await page.waitForTimeout(150);
 
-  // 2) Digita o nome exato do contato
-  await page.keyboard.type(contactName, { delay: 30 });
+  // 2) Digita o nome do contato com delay maior pra WA Web debouncar a
+  //    busca direito a cada caractere (60ms = ~17 chars/seg, suficiente
+  //    pra evitar busca atropelada).
+  await page.keyboard.type(contactName, { delay: 60 });
 
-  // 3) Espera ATIVA pelos resultados (poll). Usuario salva o nome identico
-  //    ao do ML, entao basta esperar o WA carregar a busca - sem precisar
-  //    procurar/clicar manualmente.
-  const hasResult = await waitForSearchResults(page, 8000);
+  // 3) Aguarda o debounce inicial do WA Web reagir ao ultimo char digitado
+  //    antes de comecar a procurar resultados. Sem esse pause, o
+  //    waitForSearchResults pode pegar a tela ainda do estado anterior.
+  await page.waitForTimeout(900);
+
+  // 4) Espera ATIVA por um resultado QUE CONTEM o nome buscado (nao basta
+  //    aparecer qualquer item - tem que casar com o que digitamos).
+  const hasResult = await waitForSearchResults(page, contactName, 12000);
   if (!hasResult) {
     throw new Error(`Contato nao encontrado no WhatsApp: "${contactName}". Confira se o contato esta salvo no celular com esse nome exato e se o WhatsApp Web ja sincronizou (as vezes leva alguns segundos pra aparecer).`);
   }
