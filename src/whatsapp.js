@@ -134,8 +134,12 @@ async function waitForSearchResults(page, contactName, timeoutMs) {
   while (Date.now() < deadline) {
     const status = await page.evaluate((targetName) => {
       const txt = document.body.innerText || '';
-      // 1) Texto explicito de "nenhum resultado" (PT / EN / ES)
-      if (/Nenhuma\s+conversa.*encontrada|Nenhum\s+resultado|No\s+chats?\s+found|No\s+results?|Sin\s+resultados/i.test(txt)) {
+      // 1) Texto explicito de "nenhum resultado" (PT-BR / ES).
+      //    NAO incluir o ingles "No results" porque ele bate falsamente
+      //    em frases PT como "no resultado da rota" (substring de palavras
+      //    maiores). Bug detectado nos motoristas Claudio Vitale e Ricardo
+      //    Almeida em runs reais - bypassed busca quando nao deveria.
+      if (/Nenhuma\s+conversa.*encontrada|Nenhum\s+resultado|Sin\s+resultados/i.test(txt)) {
         return 'empty';
       }
       // 2) Procura na sidebar UM item cujo texto contem o nome COMPLETO.
