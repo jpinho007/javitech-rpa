@@ -151,6 +151,7 @@ function nordicStop(sequence, opts) {
   return {
     id: 'stop-' + sequence,
     sequence,
+    printedLabel: opts.printedLabel,
     status: opts.status || 'incomplete',
     pendingShipments: opts.pending != null ? opts.pending : (opts.pkgs || 1),
     deliveredShipments: opts.delivered || 0,
@@ -208,6 +209,41 @@ console.log('\n== classifyNordicStops: exclui paradas concluidas ==');
   check('exclui 01 (status complete)', !r.comerciais.includes('01'));
   check('exclui 03 (pending=0 + entregue)', !r.comerciais.includes('03'));
   check('mantem 02', r.comerciais.includes('02'));
+}
+
+console.log('\n== classifyNordicStops: sub-parada usa printedLabel (#E-20.1) ==');
+{
+  // Cenario real da rota 380088983: parada com sequence=null mas
+  // printedLabel="#E-20.1" deve aparecer como "20.1", nao como numero
+  // inventado por posicao (bug que escrevia "22").
+  const subStop = nordicStop(null, { business: true, pkgs: 1, printedLabel: '#E-20.1' });
+  subStop.sequence = null;
+  const stops = [
+    nordicStop(20, { business: true, pkgs: 1, printedLabel: 'E-20' }),
+    nordicStop(21, { business: true, pkgs: 1, printedLabel: 'E-21' }),
+    subStop
+  ];
+  const r = classifyNordicStops(stops);
+  check('20 normal em comerciais', r.comerciais.includes('20'));
+  check('21 normal em comerciais', r.comerciais.includes('21'));
+  check('sub-parada vira "20.1" (nao "22" inventado)',
+    r.comerciais.includes('20.1'), JSON.stringify(r.comerciais));
+}
+
+console.log('\n== classifyNordicStops: multiplas sub-paradas (#E-16.1, #E-16.2) ==');
+{
+  const s1 = nordicStop(null, { residential: true, pkgs: 6, printedLabel: '#E-16.2' });
+  s1.sequence = null;
+  const s2 = nordicStop(null, { residential: true, pkgs: 8, printedLabel: '#E-16.1' });
+  s2.sequence = null;
+  const stops = [
+    nordicStop(16, { residential: true, pkgs: 5, printedLabel: 'E-16' }),
+    s1, s2
+  ];
+  const r = classifyNordicStops(stops);
+  check('16 em residenciais', r.residenciais.some(p => p.num === '16'));
+  check('16.1 em residenciais', r.residenciais.some(p => p.num === '16.1'));
+  check('16.2 em residenciais', r.residenciais.some(p => p.num === '16.2'));
 }
 
 console.log('\n== classifyNordicStops: bug Itingucu (Place via placesAmount) ==');

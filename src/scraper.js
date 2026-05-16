@@ -37,8 +37,23 @@ function packageCount(stop) {
   return 0;
 }
 
+// Extrai numero da parada do printedLabel da etiqueta ("E-20", "#E-20.1").
+// Retorna o numero como string ("20" ou "20.1") ou null se nao bate.
+function parsePrintedLabel(label) {
+  if (!label || typeof label !== 'string') return null;
+  // Aceita "E-20", "#E-20", "E-20.1", "#E-20.1"
+  const m = label.match(/E-(\d+(?:\.\d+)?)/i);
+  return m ? m[1] : null;
+}
+
 function stopSequence(stop, fallbackIndex) {
+  // 1) sequence numerica eh a fonte primaria - paradas normais.
   if (stop.sequence != null) return pad2(stop.sequence);
+  // 2) Sub-paradas (sequence=null) tem o numero real em printedLabel:
+  //    ex: "#E-20.1" -> "20.1". Sem pad2 pra preservar o ".1".
+  const fromLabel = parsePrintedLabel(stop.printedLabel);
+  if (fromLabel) return fromLabel;
+  // 3) Fallbacks defensivos
   if (stop.stopNumber != null) return pad2(stop.stopNumber);
   if (stop.order != null) return pad2(stop.order);
   return pad2(fallbackIndex + 1);
@@ -284,7 +299,12 @@ async function extractNordicRouteData(page, timeoutMs) {
             addressTypeNotCategorized: s.addressTypeNotCategorized,
             transportUnitsAmount: s.transportUnitsAmount,
             ordersAmount: s.ordersAmount,
-            placesAmount: s.placesAmount
+            placesAmount: s.placesAmount,
+            // Etiqueta impressa pra capturar sub-paradas tipo "#E-20.1"
+            // que vem com sequence=null no Nordic.
+            printedLabel: (s.orders && s.orders[0]
+              && s.orders[0].transportUnits && s.orders[0].transportUnits[0]
+              && s.orders[0].transportUnits[0].printedLabel) || null
           }))
         };
       } catch (_) { return null; }
