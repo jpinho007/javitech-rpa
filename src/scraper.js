@@ -37,12 +37,15 @@ function packageCount(stop) {
   return 0;
 }
 
-// Extrai numero da parada do printedLabel da etiqueta ("E-20", "#E-20.1").
-// Retorna o numero como string ("20" ou "20.1") ou null se nao bate.
+// Extrai numero da parada do printedLabel da etiqueta.
+// O ML usa varios prefixos de letra dependendo do tipo de rota:
+//   "E-20" / "#E-20.1" (rotas tipo E)
+//   "T-43" / "#T-43.1" (rotas tipo T)
+//   etc.
+// Aceita qualquer LETRA + "-" + numero (com casa decimal opcional).
 function parsePrintedLabel(label) {
   if (!label || typeof label !== 'string') return null;
-  // Aceita "E-20", "#E-20", "E-20.1", "#E-20.1"
-  const m = label.match(/E-(\d+(?:\.\d+)?)/i);
+  const m = label.match(/[A-Z]+-(\d+(?:\.\d+)?)/i);
   return m ? m[1] : null;
 }
 

@@ -211,6 +211,26 @@ console.log('\n== classifyNordicStops: exclui paradas concluidas ==');
   check('mantem 02', r.comerciais.includes('02'));
 }
 
+console.log('\n== classifyNordicStops: sub-parada com prefixo T- (rota tipo T) ==');
+{
+  // Rota 380114624 usa rota tipo T: etiquetas "T-1", "#T-43.1", etc.
+  // Regex tem que aceitar QUALQUER prefixo de letra, nao so "E-".
+  const sub431 = nordicStop(null, { business: true, pkgs: 1, printedLabel: '#T-43.1' });
+  sub431.sequence = null;
+  const sub551 = nordicStop(null, { business: true, pkgs: 1, printedLabel: '#T-55.1' });
+  sub551.sequence = null;
+  const stops = [
+    nordicStop(43, { residential: true, pkgs: 2, printedLabel: 'T-43', status: 'complete', pending: 0, delivered: 2 }),
+    nordicStop(55, { residential: true, pkgs: 1, printedLabel: 'T-55' }),
+    sub431,
+    sub551
+  ];
+  const r = classifyNordicStops(stops);
+  check('43.1 em comerciais (rota T)', r.comerciais.includes('43.1'), JSON.stringify(r.comerciais));
+  check('55.1 em comerciais (rota T)', r.comerciais.includes('55.1'));
+  check('NAO inventou numero por posicao', !r.comerciais.some(n => n === '03' || n === '04'));
+}
+
 console.log('\n== classifyNordicStops: sub-parada usa printedLabel (#E-20.1) ==');
 {
   // Cenario real da rota 380088983: parada com sequence=null mas
